@@ -43,8 +43,8 @@ def getVolume(sound,volume):
     return newSound
 
 # This function creates an average of two tones and returns the value
-def merge2Waves(sound1, sound2):
-    mergedSound = ((sound1 + sound2)/2)
+def mergeWaves(sound1, sound2, sound3,sound4, total):
+    mergedSound = ((sound1 + sound2 + sound3 + sound4)/total)
     return mergedSound
 
 # This function creates a pure tone
@@ -64,6 +64,7 @@ def addSoundsTogether(sound1,sound2):
     for i in xrange(0,sound2.__len__()):
         returnSound.append(sound2[i])
     return returnSound
+
 def outputSound(sound,sound_name):
     soundfile = wave.open(sound_name, "w")
     soundfile.setparams((1, 2, 44100, sound.__len__(), 'NONE', 'not compressed'))
@@ -105,6 +106,45 @@ sustain_time, release_time):
             sampleVal = int((amplitude*0+1) * rawSample)
         buildSin.append(sampleVal)
     return buildSin
+
+
+
+
+
+def keyboard(notes,noteLength,pitch):
+    fullSong = []
+    A = [440,880,1760]
+    B = [494,988,1976]
+    C = [523,1046,2093]
+    D = [587,1175,2349]
+    E = [659,1319,2637]
+    F = [698,1397,2794]
+    G = [784,1568,3136]
+
+    for i in range (notes.__len__()):
+        if notes[i] == "C":
+            fullSong = addSoundsTogether(fullSong, pureToneList(C[pitch],0,0,noteLength,0.5))
+        elif notes[i]== "D":
+            fullSong = addSoundsTogether(fullSong, pureToneList(D[pitch],0,0,noteLength, 0.5))
+        elif notes[i]== "E":
+            fullSong = addSoundsTogether(fullSong, pureToneList(E[pitch],0,0, noteLength, 0.5))
+        elif notes[i]== "F":
+            fullSong = addSoundsTogether(fullSong, pureToneList(F[pitch],0,0, noteLength, 0.5))
+        elif notes[i]== "G":
+            fullSong = addSoundsTogether(fullSong, pureToneList(G[pitch],0,0, noteLength, 0.5))
+        elif notes[i]== "A":
+            fullSong = addSoundsTogether(fullSong, pureToneList(A[pitch],0,0, noteLength, 0.5))
+        elif notes[i]== "B":
+            fullSong = addSoundsTogether(fullSong, pureToneList(B[pitch],0,0, noteLength, 0.5))
+    return fullSong
+
+
+
+
+
+
+
+
 # sineWave = envelopeWave(440,6000,4100,35000,5000)
 # print sineWave
 # outputSound(sineWave,"sineWave.wav")
@@ -127,25 +167,40 @@ sustain_time, release_time):
 
 # values = []
 #
-# for j in range(0, SAMPLE_LENGTH):
-#
-#     # This is the time in seconds
-#     TIME = float(j / SAMPLE_WIDTH)
-#
-#     # Here two tones are created using a given frequency
-#     tone1 = pureTone(600, TIME)
-#     tone2 = pureTone(150, TIME)
-#
-#
-#     # Here we merge two tones to created a new tone
-#     tone = merge2Waves(tone1, tone2)
-#
-#     # Here we adjust the volume, using a value from 0 to 1
-#     tone = getVolume(tone, 0.5)
-#     packaged_value = struct.pack("<h", tone)
-#     values.append(packaged_value)
-#
-# value_str = "".join(values)
-#
-# Sound_out.writeframes(value_str)
-# Sound_out.close()
+
+# Volume is from 0 to 1, frequency is normal frequency, length is in tenths of seconds
+def pureToneList(frequency,frequency2, frequency3,length,volume):
+    fullTone = []
+    samplesPerSecond1 = float(44100)
+    samplesPerSecond2 = 4410
+    numberOfSamples = (length * samplesPerSecond2)
+    for j in xrange(0, numberOfSamples):
+
+        # This is the current point in time in seconds
+        time = float(j / samplesPerSecond1)
+        print time
+        if frequency2 == 0 & frequency3 == 0:
+            tone1 = pureTone(frequency,time)
+            tone = getVolume(tone1, volume)
+        elif frequency3 == 0:
+            tone1 = pureTone(frequency,time)
+            tone2 = pureTone(frequency2, time)
+            tone = mergeWaves(tone1, tone2,0,0,2)
+        else:
+            tone1 = pureTone(frequency, time)
+            tone2 = pureTone(frequency2, time)
+            tone3 = pureTone(frequency3, time)
+            tone = mergeWaves(tone1, tone2, tone3,0,3)
+
+
+        fullTone.append(tone)
+
+    return fullTone
+
+
+#Make a Song!!
+notes = ["B","B","G","G","F","F","E","E","D","D","C"]
+
+# note length is in tenths of a second, pitch is from 0 - 2, 0 being low frequency and 2 high
+music = keyboard(notes,5,0)
+outputSound(music,"music.wav")
