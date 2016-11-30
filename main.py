@@ -1,10 +1,10 @@
 import wave
 import struct
 import math
-import winsound
+
 Sound= wave.open("noise2.wav","r")
 Sound_out= wave.open("noise3.wav","w")
-Final_round = wave.open("final_round.wav","r")
+# Final_round = wave.open("final_round.wav","r")
 # Final_round_offset = wave.open("final_round_offset.ogg","w")
 # Final_round_echo = wave.open("final_round_echo.ogg","w")
 # Read_params = Sound.getparams()
@@ -13,7 +13,7 @@ SAMPLE_LENGTH = 88200
 SAMPLE_WIDTH = float(44100)
 Sound_out.setparams((1, 2, SAMPLE_WIDTH, SAMPLE_LENGTH, 'NONE', 'not compressed'))
 
-print Final_round.getparams()
+
 
 # This function adjusts the volume of the tone
 def listValues(sound_file):
@@ -74,7 +74,41 @@ def outputSound(sound,sound_name):
     sound_string = "".join(soundOutput)
     soundfile.writeframes(sound_string)
     soundfile.close()
-outputSound(addSoundsTogether(listValues(Final_round),listValues(Sound)),"testfile.wav")
+
+
+def sineWave(freq,amplitude):
+    buildSin = []
+    samplingRate = 44100
+    interval = 1.0 / freq
+    samplesPerCycle = interval * samplingRate
+    maxCycle = 2 * math.pi
+    for pos in xrange(0,44100):
+        rawSample = math.sin((pos / samplesPerCycle) * maxCycle)
+        sampleVal = int(amplitude * rawSample)
+        buildSin.append(sampleVal)
+    return buildSin
+
+def envelopeWave(freq, amplitude, attack_time,
+sustain_time, release_time):
+    buildSin = []
+    samplingRate = 44100
+    interval = 1.0 / freq
+    samplesPerCycle = interval * samplingRate
+    maxCycle = 2 * math.pi
+    for pos in xrange(0,44100):
+        rawSample = math.sin((pos / samplesPerCycle) * maxCycle)
+        if pos < attack_time:
+            sampleVal = int((amplitude+4000) * rawSample)
+        elif sustain_time > pos > attack_time:
+            sampleVal = int(amplitude * rawSample)
+        elif release_time > pos > sustain_time:
+            sampleVal = int((amplitude*0+1) * rawSample)
+        buildSin.append(sampleVal)
+    return buildSin
+# sineWave = envelopeWave(440,6000,4100,35000,5000)
+# print sineWave
+# outputSound(sineWave,"sineWave.wav")
+#outputSound(addSoundsTogether(listValues(Final_round),listValues(Sound)),"testfile.wav")
 
 # frames = []
 # for i in xrange(0, nframes):
