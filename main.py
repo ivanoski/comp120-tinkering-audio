@@ -4,18 +4,21 @@ import math
 
 Sound= wave.open("noise2.wav","r")
 Sound_out= wave.open("noise3.wav","w")
+adventure = wave.open("adventure_music.wav","r")
+Music = wave.open("music.wav","r")
 # Final_round = wave.open("final_round.wav","r")
 # Final_round_offset = wave.open("final_round_offset.ogg","w")
 # Final_round_echo = wave.open("final_round_echo.ogg","w")
 # Read_params = Sound.getparams()
 # print Read_params
+sixteenbit = 2 ** (8 * 2 - 1) - 1
+eightbit = 2 ** (8 * 1 - 1) - 1
+oneToOne = sixteenbit/eightbit
 SAMPLE_LENGTH = 88200
 SAMPLE_WIDTH = float(44100)
 Sound_out.setparams((1, 2, SAMPLE_WIDTH, SAMPLE_LENGTH, 'NONE', 'not compressed'))
-
-
-
 # This function adjusts the volume of the tone
+
 def listValues(sound_file):
     valueList = []
     for i in xrange(0, getLength(sound_file)):
@@ -23,6 +26,7 @@ def listValues(sound_file):
         value = struct.unpack("<h", noiseFrames)
         valueList.append(int(value[0]))
     return valueList
+
 def getLength(sound):
     sampleLenght = sound.getnframes()
     return sampleLenght
@@ -37,7 +41,14 @@ def setSampleValueAt(sound,sample_number,value):
 
 
 
-
+def EightBitInt(value,volume):
+    currentMaxValue = 1
+    for i in xrange(0,128):
+        if 0 < value <= currentMaxValue:
+            return i*volume
+        elif -currentMaxValue <= value <= 0:
+            return i*-volume
+        currentMaxValue += oneToOne
 def getVolume(sound,volume):
     newSound = volume * sound * 40000
     return newSound
@@ -109,8 +120,6 @@ sustain_time, release_time):
 
 
 
-
-
 def keyboard(notes,noteLength,pitch):
     fullSong = []
     A = [440,880,1760]
@@ -120,6 +129,7 @@ def keyboard(notes,noteLength,pitch):
     E = [659,1319,2637]
     F = [698,1397,2794]
     G = [784,1568,3136]
+    Pause = [0,0,0]
 
     for i in range (notes.__len__()):
         if notes[i] == "C":
@@ -136,6 +146,8 @@ def keyboard(notes,noteLength,pitch):
             fullSong = addSoundsTogether(fullSong, pureToneList(A[pitch],0,0, noteLength, 0.5))
         elif notes[i]== "B":
             fullSong = addSoundsTogether(fullSong, pureToneList(B[pitch],0,0, noteLength, 0.5))
+        elif notes[i]=="Pause":
+            fullSong = addSoundsTogether(fullSong, pureToneList(Pause[pitch],0,0, noteLength, 0.5))
     return fullSong
 
 
@@ -178,7 +190,6 @@ def pureToneList(frequency,frequency2, frequency3,length,volume):
 
         # This is the current point in time in seconds
         time = float(j / samplesPerSecond1)
-        print time
         if frequency2 == 0 & frequency3 == 0:
             tone1 = pureTone(frequency,time)
             tone = getVolume(tone1, volume)
@@ -198,9 +209,25 @@ def pureToneList(frequency,frequency2, frequency3,length,volume):
     return fullTone
 
 
-#Make a Song!!
-notes = ["B","B","G","G","F","F","E","E","D","D","C"]
+#Make a Song!! Indiana EFGC DEF GABF AABCDE EFGC DEF GABF AABCDE EFGC DEF GGED GED GED GFEDC
+notes = ["E","F","G","C","D","E","F", "G","A","B","F", "A","A","B","C","D","E", "E","F","G","C", "D","E","F", "G","A","B","F", "A","A","B","C","D","E", "E","F","G","C", "D","E","F", "G","G","E","D", "G","E","D", "G","E","D", "G","F","E","D","C"]
 
 # note length is in tenths of a second, pitch is from 0 - 2, 0 being low frequency and 2 high
-music = keyboard(notes,5,0)
-outputSound(music,"music.wav")
+music = keyboard(notes,4,0)
+# outputSound(music,"music.wav")
+#Convert To 8bit
+
+def convertTo8bit(sound_file, outputFileName):
+    Values = listValues(sound_file)
+    WriteFile = wave.open(str(outputFileName), "w")
+    WriteFile.setparams((1, 1, 44100, Values.__len__(), 'NONE', 'not compressed'))
+    soundOutput = []
+    for frame in Values:
+        eightBitFrame = 127+EightBitInt(frame,0.5)
+        packaged_value = struct.pack('<B', int(eightBitFrame))
+        soundOutput.append(packaged_value)
+    sound_string = "".join(soundOutput)
+    WriteFile.writeframes(sound_string)
+    WriteFile.close()
+convertTo8bit(Music,"Music_8bit.wav")
+
